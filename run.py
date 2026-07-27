@@ -14,8 +14,8 @@ from werkzeug.utils import secure_filename
 
 # 1. Setup paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-backend_path = os.path.join(BASE_DIR, "backend py", "Patent", "Patent", "patent_app")
-frontend_path = os.path.join(BASE_DIR, "patentform-main (1)", "patentform-main", "Patentform", "frontend")
+backend_path = os.path.join(BASE_DIR, "backend")
+frontend_path = os.path.join(BASE_DIR, "patentform-main", "frontend")
 
 # 2. Add backend path to sys.path to dynamically import its components
 sys.path.insert(0, backend_path)

@@ -75,7 +75,7 @@ function UploadCard({ onDataParsed }) {
       const formData = new FormData();
       formData.append('file', uploadedFile);
 
-      const parseResponse = await fetch('http://localhost:8080/api/patent/parse', {
+      const parseResponse = await fetch('/api/patent/parse', {
         method: 'POST',
         body: formData,
       });

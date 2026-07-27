@@ -1,0 +1,8 @@
+{
+  "name": "git-jit",
+  "version": "1.0.0",
+  "description": "Root configuration for unified Patent form generator deployment",
+  "scripts": {
+    "build": "npm --prefix patentform-main/frontend install && npm --prefix patentform-main/frontend run build"
+  }
+}

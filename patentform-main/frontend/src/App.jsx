@@ -17,10 +17,10 @@ function App() {
   const [isDownloading, setIsDownloading] = useState(false);
   // Track which forms are selected in the right column
   const [selectedForms, setSelectedForms] = useState([]);
-  // Track user login information (initialized to bypass login page)
+  // Track user login information (initialized with default credentials for bypass)
   const [user, setUser] = useState({
-    name: '',
-    email: '',
+    name: 'jit',
+    email: 'venu',
     additionalMembers: []
   });
 

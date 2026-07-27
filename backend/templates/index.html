@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Patent Form Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [templates, setTemplates] = useState([]);
+            const [templatePath, setTemplatePath] = useState("");
+            const [selectedTemplates, setSelectedTemplates] = useState([]);
+            const [file, setFile] = useState(null);
+            const [useLlm, setUseLlm] = useState(false);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [generatedFiles, setGeneratedFiles] = useState([]);
+            const [error, setError] = useState(null);
+
+            useEffect(() => {
+                lucide.createIcons();
+                // Fetch available templates from the backend folder with a timestamp cache-buster
+                fetch('/api/templates?nocache=' + new Date().getTime())
+                    .then(res => {
+                        if (!res.ok) throw new Error("Backend connection failed.");
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.templates) {
+                            setTemplates(data.templates);
+                            setSelectedTemplates(data.templates); // Select all by default
+                        }
+                        if (data.scanned_path) {
+                            setTemplatePath(data.scanned_path);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Failed to load templates", err);
+                        setError("Could not connect to the Python backend to load templates.");
+                    });
+            }, []);
+
+            const toggleTemplate = (tpl) => {
+                if (selectedTemplates.includes(tpl)) {
+                    setSelectedTemplates(selectedTemplates.filter(t => t !== tpl));
+                } else {
+                    setSelectedTemplates([...selectedTemplates, tpl]);
+                }
+            };
+
+            const handleFileChange = (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    setFile(e.target.files[0]);
+                    setGeneratedFiles([]); // Reset previous generations
+                }
+            };
+
+            const handleGenerate = async () => {
+                if (!file) {
+                    setError("Please select a document first.");
+                    return;
+                }
+                if (selectedTemplates.length === 0) {
+                    setError("Please select at least one template to generate.");
+                    return;
+                }
+
+                setIsGenerating(true);
+                setError(null);
+                setGeneratedFiles([]);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('use_llm', useLlm);
+                selectedTemplates.forEach(tpl => formData.append('templates', tpl));
+
+                try {
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || "Generation failed");
+                    }
+                    setGeneratedFiles(data.files);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col md:flex-row">
+                    
+                    {/* Sidebar: Available Templates */}
+                    <div className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col h-auto md:h-screen sticky top-0 shadow-sm z-10">
+                        <div className="flex items-center gap-2 text-blue-600 mb-8">
+                            <i data-lucide="file-stack" className="w-8 h-8"></i>
+                            <h1 className="text-xl font-bold text-gray-900">PatentGen</h1>
+                        </div>
+                        
+                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Available Templates</h2>
+                        
+                        {templates.length === 0 ? (
+                            <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-dashed">
+                                No templates found.<br/><br/>
+                                Please move your <strong>.docx</strong> files into this exact folder on your computer:<br/>
+                                <code className="text-xs bg-gray-200 text-red-600 px-2 py-1 rounded mt-2 block break-all font-mono">
+                                    {templatePath || "patent_templates"}
+                                </code>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3 overflow-y-auto">
+                                {templates.map((tpl, idx) => (
+                                    <label key={idx} className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${selectedTemplates.includes(tpl) ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                            checked={selectedTemplates.includes(tpl)}
+                                            onChange={() => toggleTemplate(tpl)}
+                                        />
+                                        <span className="ml-3 text-sm font-medium text-gray-700 truncate" title={tpl}>
+                                            {tpl}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 p-6 md:p-12 overflow-y-auto">
+                        <div className="max-w-2xl mx-auto">
+                            
+                            <div className="mb-8">
+                                <h2 className="text-3xl font-bold text-gray-900">Generate Patent Forms</h2>
+                                <p className="text-gray-500 mt-2">Upload a student document to instantly populate and generate the selected templates.</p>
+                            </div>
+
+                            {/* Upload Card */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">Input Document</label>
+                                <input 
+                                    type="file" 
+                                    accept=".docx,.txt"
+                                    onChange={handleFileChange}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors border border-gray-200 rounded-xl cursor-pointer"
+                                />
+                                
+                                <div className="mt-5 flex items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <input 
+                                        id="useLlm" 
+                                        type="checkbox" 
+                                        checked={useLlm}
+                                        onChange={(e) => setUseLlm(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                    />
+                                    <label htmlFor="useLlm" className="ml-2 block text-sm font-medium text-gray-700 cursor-pointer">
+                                        Use Intelligent AI Extraction <span className="text-gray-400 font-normal">(Gemma 3)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center text-sm">
+                                    <i data-lucide="alert-circle" className="w-5 h-5 mr-2"></i>
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* Action Button */}
+                            <button 
+                                onClick={handleGenerate}
+                                disabled={isGenerating || !file || templates.length === 0}
+                                className={`w-full py-4 rounded-xl font-bold text-white flex justify-center items-center gap-2 transition-all shadow-md ${isGenerating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg active:scale-[0.98]'}`}
+                            >
+                                {isGenerating ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <i data-lucide="loader-2" className="w-5 h-5 animate-spin"></i> Processing Document...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <i data-lucide="zap" className="w-5 h-5"></i> Generate {selectedTemplates.length} Selected Forms
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Generated Files Display */}
+                            {generatedFiles.length > 0 && (
+                                <div className="mt-10 animate-fade-in">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                                        <i data-lucide="check-circle-2" className="w-5 h-5 text-green-500 mr-2"></i> 
+                                        Successfully Generated
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {generatedFiles.map((f, i) => (
+                                            <div key={i} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                                                <div className="flex items-start gap-3 mb-4">
+                                                    <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+                                                        <i data-lucide="file-text" className="w-5 h-5"></i>
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-gray-800 break-all line-clamp-2" title={f.name}>{f.name}</span>
+                                                </div>
+                                                <a 
+                                                    href={f.url} 
+                                                    download 
+                                                    className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium py-2 rounded-lg text-sm flex items-center justify-center transition-colors"
+                                                >
+                                                    <i data-lucide="download" className="w-4 h-4 mr-2"></i> Download
+                                                </a>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

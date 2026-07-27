@@ -1,0 +1,4 @@
+flask
+ollama
+python-docx
+werkzeug

@@ -1,0 +1,76 @@
+{
+"application_type": {
+"ordinary": true,
+"convention": false,
+"pct_np": false,
+"divisional": false,
+"patent_of_addition": false
+},
+"applicant": {
+"name": "JEPPIAAR INSTITUTE OF TECHNOLOGY",
+"nationality": "Indian",
+"country_of_residence": "India",
+"address": {
+"house_no": "Kunnam, Sunguvarchatram",
+"street": "Kanchipuram District",
+"city": "Sriperumbudur",
+"state": "Tamil Nadu",
+"country": "India",
+"pin_code": "631604"
+}
+},
+"applicant_category": {
+"natural_person": true,
+"other_than_natural_person": false,
+"small_entity": false,
+"startup": false
+},
+"authorized_patent_agent": {
+"in_pa_no": "",
+"name": "",
+"mobile_no": ""
+},
+"address_for_service": {
+"name": "Dr. J. VENU GOPALA KRISHNAN",
+"postal_address": "Principal, Jeppiaar Institute of Technology (JIT), Kunnam, Sunguvarchatram, Sriperumbudur, Tamil Nadu, India - 631604",
+"telephone_no": "+91-044-27159000",
+"mobile_no": "7401222007",
+"fax_no": "+91-044-27159006",
+"email_id": "principal@jeppiaarinstitute.org"
+},
+"priority_claim": {
+"has_priority": false,
+"country": "",
+"application_number": "",
+"filing_date": "",
+"applicant_name": "",
+"title": "",
+"ipc": ""
+},
+"pct_details": {
+"international_application_number": "",
+"international_filing_date": ""
+},
+"divisional_application": {
+"original_application_no": "",
+"date_of_filing": ""
+},
+"patent_of_addition": {
+"main_application_no": "",
+"date_of_filing": ""
+},
+"attachments": {
+"form_2": {
+"specification_type": "Complete",
+"number_of_pages": null,
+"number_of_claims": null,
+"claim_pages": null,
+"abstract_pages": 1,
+"drawings_count": 2,
+"drawing_pages": null
+},
+"form_3": true,
+"form_5": true,
+"power_of_authority": false
+}
+}
